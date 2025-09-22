@@ -1,22 +1,18 @@
-const User = require("../models/User");
+const User = require("../models/UserModel");
 
 class AuthController {
   async login(login, password) {
     try {
-      // Buscar usuário no banco
       const user = await User.findOne({ where: { login } });
-
       if (!user) {
         return null;
       }
 
-      const isPasswordValid = user.checkPassword(password);
-
+      const isPasswordValid = await user.checkPassword(password);
       if (!isPasswordValid) {
         return null;
       }
 
-      // Retornar dados do usuário (sem a senha)
       return {
         userId: user.id,
         login: user.login,
@@ -27,7 +23,31 @@ class AuthController {
     }
   }
 
-  // Método para criar usuário admin inicial
+  async register(login, password) {
+    try {
+      const userExists = await User.findOne({ where: { login } });
+      if (userExists) {
+        throw new Error("USER_ALREADY_EXISTS");
+      }
+
+      const user = await User.create({ login, password });
+      return {
+        userId: user.id,
+        login: user.login,
+      };
+    } catch (error) {
+      if (error.message === "USER_ALREADY_EXISTS") {
+        throw error;
+      }
+      if (error.name === "SequelizeValidationError") {
+        throw error;
+      }
+
+      console.error("Erro ao registrar usuário:", error);
+      throw new Error("SERVER_ERROR");
+    }
+  }
+
   async createAdminUser() {
     try {
       const existingAdmin = await User.findOne({
@@ -37,7 +57,7 @@ class AuthController {
       if (!existingAdmin) {
         await User.create({
           login: "admin@admin.com",
-          password: "Admin", // Senha em texto puro (sem hash)
+          password: "Admin",
         });
       }
     } catch (error) {
@@ -47,3 +67,4 @@ class AuthController {
 }
 
 module.exports = AuthController;
+("");

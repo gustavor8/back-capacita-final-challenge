@@ -40,4 +40,54 @@ PublicRoutes.post("/login", async (request, response) => {
   }
 });
 
+PublicRoutes.post("/register", async (request, response) => {
+  try {
+    const { login, password } = request.body;
+
+    if (!login || !password) {
+      return response.status(400).json({
+        message: "Login e senha são obrigatórios",
+      });
+    }
+
+    const auth = new AuthController();
+    const userData = await auth.register(login, password);
+
+    return response.status(201).json({
+      message: "Usuário registrado com sucesso",
+      user: userData,
+    });
+  } catch (error) {
+    console.error("Erro no registro:", error);
+
+    if (error.message === "USER_ALREADY_EXISTS") {
+      return response.status(409).json({
+        message: "Usuário já existe",
+      });
+    }
+    if (error.name === "SequelizeValidationError") {
+      if (error.errors.some((e) => e.validatorKey === "isEmail")) {
+        return response.status(400).json({
+          message: "O login precisa ser um e-mail válido",
+        });
+      }
+
+      return response.status(400).json({
+        message: "Dados inválidos",
+        errors: error.errors.map((e) => e.message),
+      });
+    }
+
+    if (error.message === "SERVER_ERROR") {
+      return response.status(500).json({
+        message: "Erro interno do servidor",
+      });
+    }
+
+    return response.status(500).json({
+      message: "Erro interno do servidor: " + error,
+    });
+  }
+});
+
 module.exports = PublicRoutes;

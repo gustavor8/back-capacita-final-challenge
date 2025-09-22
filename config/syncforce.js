@@ -1,4 +1,4 @@
-const AuthController = require("./controllers/AuthController");
+const AuthController = require("../controllers/AuthController");
 const connection = require("./connection");
 
 async function initialize() {

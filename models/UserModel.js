@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
-const connection = require("../connection");
+const bcrypt = require("bcrypt");
+const connection = require("../config/connection");
 
 const User = connection.define(
   "User",
@@ -24,12 +25,23 @@ const User = connection.define(
   },
   {
     tableName: "users",
+    hooks: {
+      // Antes de salvar, criptografa a senha
+      beforeCreate: async (user) => {
+        user.password = await bcrypt.hash(user.password, 10);
+      },
+      beforeUpdate: async (user) => {
+        if (user.changed("password")) {
+          user.password = await bcrypt.hash(user.password, 10);
+        }
+      },
+    },
   }
 );
 
-// Método para verificar senha (sem bcrypt)
-User.prototype.checkPassword = function (password) {
-  return this.password === password;
+// Método para verificar senha
+User.prototype.checkPassword = async function (password) {
+  return await bcrypt.compare(password, this.password);
 };
 
 module.exports = User;
