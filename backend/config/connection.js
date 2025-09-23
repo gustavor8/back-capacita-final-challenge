@@ -1,12 +1,14 @@
-const { Sequelize } = require("sequelize");
-require("dotenv").config();
+import { Sequelize } from "sequelize";
+import dotenv from "dotenv";
 
-const connection = new Sequelize('postgresql://neondb_owner:npg_5dK4sovaQtNl@ep-late-queen-aemm2djx-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require', {
+dotenv.config();
+
+const connection = new Sequelize(process.env.DATABASE_URL, {
   dialect: "postgres",
   dialectOptions: {
-    ssl: { require: true, rejectUnauthorized: false }, // obrigatório no Vercel/Neon
+    ssl: { require: true, rejectUnauthorized: false },
   },
   logging: false,
 });
 
-module.exports = connection;
+export default connection;
