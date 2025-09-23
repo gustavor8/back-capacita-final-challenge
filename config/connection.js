@@ -1,13 +1,11 @@
 const { Sequelize } = require("sequelize");
 require("dotenv").config();
 
-const connection = new Sequelize({
+const connection = new Sequelize('postgresql://neondb_owner:npg_5dK4sovaQtNl@ep-late-queen-aemm2djx-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require', {
   dialect: "postgres",
-  database: process.env.DB_NAME || "pokemon",
-  host: process.env.DB_HOST || "localhost",
-  username: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "Qwe12345",
-  port: process.env.DB_PORT || 5432,
+  dialectOptions: {
+    ssl: { require: true, rejectUnauthorized: false }, // obrigatório no Vercel/Neon
+  },
   logging: false,
 });
 

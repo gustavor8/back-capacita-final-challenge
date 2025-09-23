@@ -5,40 +5,32 @@ const AuthController = require("../controllers/AuthController");
 
 const PublicRoutes = express.Router();
 
-PublicRoutes.post("/login", async (request, response) => {
+PublicRoutes.post("/login", async (req, res) => {
   try {
-    const { login, password } = request.body;
-
-    if (!login || !password) {
-      return response.status(400).json({
-        message: "Login e senha são obrigatórios",
-      });
-    }
+    const { login, password } = req.body;
+    if (!login || !password) return res.status(400).json({ message: "Login e senha são obrigatórios" });
 
     const auth = new AuthController();
     const userData = await auth.login(login, password);
 
-    if (userData) {
-      const token = jwt.sign(userData, process.env.APP_KEY_TOKEN, {
-        expiresIn: "1h",
-      });
-
-      return response.json({
-        token,
-        user: userData,
-      });
+    if (!userData) {
+      console.log("Login falhou para:", login);
+      return res.status(401).json({ message: "Credenciais inválidas" });
     }
 
-    return response.status(401).json({
-      message: "Credenciais inválidas",
-    });
+    if (!process.env.APP_KEY_TOKEN) {
+      console.error("APP_KEY_TOKEN não definido!");
+      return res.status(500).json({ message: "Erro interno: chave JWT não definida" });
+    }
+
+    const token = jwt.sign(userData, process.env.APP_KEY_TOKEN, { expiresIn: "1h" });
+    return res.json({ token, user: userData });
   } catch (error) {
     console.error("Erro no login:", error);
-    return response.status(500).json({
-      message: "Erro interno do servidor",
-    });
+    return res.status(500).json({ message: "Erro interno do servidor" });
   }
 });
+
 
 PublicRoutes.post("/register", async (request, response) => {
   try {
