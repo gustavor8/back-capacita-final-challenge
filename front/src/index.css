@@ -1,0 +1,12 @@
+@import "tailwindcss";
+* {
+  border: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: "Outfit", sans-serif;
+  background-image: url(../src/assets/img/fundo-site.png);
+  background-size: cover;
+  min-height: 100vh;
+}
