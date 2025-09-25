@@ -1,9 +1,10 @@
-const AuthController = require("../controllers/AuthController");
-const connection = require("./connection");
+import AuthController from "../controllers/auth_controller.js";
+import connection from "./connection.js";
 
 async function initialize() {
   try {
     // Sincronizar modelos com o banco
+    // Agora `connection` é o objeto certo e .sync() funciona diretamente
     await connection.sync({ force: false });
 
     // Criar usuário admin se não existir
@@ -16,4 +17,4 @@ async function initialize() {
   }
 }
 
-module.exports = initialize;
+export default initialize;
