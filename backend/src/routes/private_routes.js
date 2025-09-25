@@ -1,33 +1,32 @@
-// const express = require("express");
-// const jwt = require("jsonwebtoken");
-// require("dotenv").config();
+import express from "express";
+import PokedexController from "../controllers/pokedex_controller.js";
 
-// // Adicionando rotas privadas
-// //const ProductRoutes = require("./ProductRoutes");
+const privateRoutes = express.Router();
+const pokedexController = new PokedexController();
 
-// const PrivateRoutes = express.Router();
+// --- Rotas de Favoritos ---
+privateRoutes.get(
+  "/favorites",
+  pokedexController.getFavorites.bind(pokedexController)
+);
+privateRoutes.post(
+  "/favorites",
+  pokedexController.addFavorite.bind(pokedexController)
+);
+privateRoutes.delete(
+  "/favorites/:pokemonId",
+  pokedexController.removeFavorite.bind(pokedexController)
+);
 
-// // Middleware de autenticação
-// PrivateRoutes.use((request, response, next) => {
-//   const token = request.headers.token;
+// --- Rotas de Times ---
+privateRoutes.get("/teams", pokedexController.getTeams.bind(pokedexController));
+privateRoutes.post(
+  "/teams",
+  pokedexController.createTeam.bind(pokedexController)
+);
+privateRoutes.delete(
+  "/teams/:teamId",
+  pokedexController.deleteTeam.bind(pokedexController)
+);
 
-//   if (!token) {
-//     return response.status(401).json({ message: "Token não fornecido teste" });
-//   }
-
-//   try {
-//     // verify token
-//     const decoded = jwt.verify(token, process.env.APP_KEY_TOKEN);
-//     console.log("Token válido. Dados:", decoded);
-//     next();
-//   } catch (error) {
-//     return response.status(403).json({
-//       message: "Token inválido",
-//       error: error.message,
-//     });
-//   }
-// });
-// // Rotas privadas protegidas
-// PrivateRoutes.use(ProductRoutes);
-
-// module.exports = PrivateRoutes;
+export default privateRoutes;
