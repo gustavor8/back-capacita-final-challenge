@@ -1,7 +1,9 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
-import "./Login.css";
+import React, { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import useRandomPokemon from "../../hooks/useRandomPokemon";
+import Input from "../../components/Input/Input";
+import Button from "../../components/Button/Button";
+import { Link } from "react-router-dom";
 
 const styleConstants = {
   pokedexFrame:
@@ -121,12 +123,25 @@ const LoginForm = () => {
         </div>
         <Button type="submit">Entrar</Button>
       </form>
+      <div className="mt-6 h-12 flex items-center justify-center">
+        {error && (
+          <p className="w-full text-center text-red-600 font-semibold bg-red-100 p-3 rounded-lg">
+            {error}
+          </p>
+        )}
+      </div>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      <p style={{ marginTop: "10px", color: "#fff" }}>
-        Não tem uma conta? <Link to="/cadastro">Cadastrar</Link>
-      </p>
+      <div className="text-center mt-4">
+        <p className="text-gray-600">
+          Não tem uma conta?{" "}
+          <Link
+            to="/register"
+            className="font-bold text-red-600 hover:underline"
+          >
+            Registre-se
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };
