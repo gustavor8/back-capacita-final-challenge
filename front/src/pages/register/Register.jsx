@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { useAuth } from "../../context/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
+import { register as registerService } from "../../services/authService";
 import useRandomPokemon from "../../hooks/useRandomPokemon";
 import Input from "../../components/Input/Input";
 import Button from "../../components/Button/Button";
-import { Link } from "react-router-dom";
 
 const styleConstants = {
   pokedexFrame:
@@ -17,7 +17,6 @@ const styleConstants = {
   infoDisplay:
     "w-full p-3 bg-green-400 text-gray-800 rounded-md text-center font-mono text-xl font-bold shadow-md capitalize border-2 border-green-600",
 };
-
 const PokedexLight = ({ color }) => (
   <div
     className={`w-5 h-5 rounded-full ${color} border-2 border-white/50 shadow-inner`}
@@ -26,14 +25,12 @@ const PokedexLight = ({ color }) => (
 const Spinner = () => (
   <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-green-400" />
 );
-
 const PokemonDisplay = ({ pokemon, isLoading }) => {
   const formatPokemonId = (id) => `#${String(id).padStart(3, "0")}`;
   return (
     <div className={styleConstants.leftPanel}>
       <div className="w-full flex items-center space-x-2">
-        <PokedexLight color="bg-blue-400" />
-        <PokedexLight color="bg-red-500" />
+        <PokedexLight color="bg-blue-400" /> <PokedexLight color="bg-red-500" />{" "}
         <PokedexLight color="bg-yellow-400" />
       </div>
       <div className={styleConstants.screen}>
@@ -62,21 +59,36 @@ const PokemonDisplay = ({ pokemon, isLoading }) => {
   );
 };
 
-const LoginForm = () => {
+const RegisterForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (!email || !password) {
+    setSuccess("");
+
+    if (!email || !password || !confirmPassword) {
       setError("Por favor, preencha todos os campos.");
       return;
     }
+    if (password !== confirmPassword) {
+      setError("As senhas não coincidem.");
+      return;
+    }
+
     try {
-      await login(email, password);
+      await registerService(email, password);
+      setSuccess(
+        "Usuário registrado com sucesso! Redirecionando para o login..."
+      );
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (err) {
       setError(err.message);
     }
@@ -88,9 +100,9 @@ const LoginForm = () => {
         Pokédex
       </h1>
       <h2 className="text-xl font-semibold text-gray-700 text-center mb-6">
-        Login do Sistema
+        Crie sua Conta
       </h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label
             className="block text-gray-700 text-sm font-bold mb-2"
@@ -101,7 +113,7 @@ const LoginForm = () => {
           <Input
             id="email"
             type="text"
-            placeholder="Ex: ash@ketchum"
+            placeholder="Ex: ash@ketchum.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -121,24 +133,42 @@ const LoginForm = () => {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-        <Button type="submit">Entrar</Button>
+        <div>
+          <label
+            className="block text-gray-700 text-sm font-bold mb-2"
+            htmlFor="confirmPassword"
+          >
+            Confirmar Senha
+          </label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            placeholder="••••••••••"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+        </div>
+        <Button type="submit">Registrar</Button>
       </form>
-      <div className="mt-6 h-12 flex items-center justify-center">
+
+      <div className="mt-4 h-12 flex items-center justify-center">
         {error && (
           <p className="w-full text-center text-red-600 font-semibold bg-red-100 p-3 rounded-lg">
             {error}
+          </p>
+        )}
+        {success && (
+          <p className="w-full text-center text-green-600 font-semibold bg-green-100 p-3 rounded-lg">
+            {success}
           </p>
         )}
       </div>
 
       <div className="text-center mt-4">
         <p className="text-gray-600">
-          Não tem uma conta?{" "}
-          <Link
-            to="/register"
-            className="font-bold text-red-600 hover:underline"
-          >
-            Registre-se
+          Já tem uma conta?{" "}
+          <Link to="/login" className="font-bold text-red-600 hover:underline">
+            Faça login
           </Link>
         </p>
       </div>
@@ -146,7 +176,7 @@ const LoginForm = () => {
   );
 };
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const { pokemon, isLoading } = useRandomPokemon();
   return (
     <main
@@ -164,7 +194,7 @@ export default function LoginPage() {
             <div className="w-2 h-8 bg-gray-600 rounded-full my-4 shadow-inner" />
             <div className="w-2 h-8 bg-gray-600 rounded-full my-4 shadow-inner" />
           </div>
-          <LoginForm />
+          <RegisterForm />
         </div>
       </div>
     </main>
