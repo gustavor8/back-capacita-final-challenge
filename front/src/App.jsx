@@ -5,7 +5,6 @@ import AppRoutes from "./Routes.jsx";
 function App() {
   return (
     <BrowserRouter>
-      <Header />
       <main>
         <AppRoutes />
       </main>
