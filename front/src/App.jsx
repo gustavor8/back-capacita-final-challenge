@@ -1,15 +1,24 @@
-import Header from "./components/header/header";
-import { BrowserRouter } from "react-router-dom";
-import AppRoutes from "./Routes.jsx";
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import PokedexPage from "./pages/Pokedex/Pokedex";
+import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
+import LoginPage from "./pages/login/Login";
 
-function App() {
+const AppRoutes = () => {
   return (
-    <BrowserRouter>
-      <main>
-        <AppRoutes />
-      </main>
-    </BrowserRouter>
-  );
-}
+    <Routes>
+      {/* Rota Pública */}
+      <Route path="/login" element={<LoginPage />} />
 
-export default App;
+      {/* Rotas Protegidas */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<PokedexPage />} />
+      </Route>
+
+      {/* Se nenhuma rota corresponder, redireciona para a home */}
+      <Route path="*" element={<Navigate to="/" />} />
+    </Routes>
+  );
+};
+
+export default AppRoutes;

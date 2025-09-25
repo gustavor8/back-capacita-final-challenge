@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import useRandomPokemon from "../../hooks/useRandomPokemon";
+import Input from "../../components/Input/Input";
+import Button from "../../components/Button/Button";
 
 const styleConstants = {
-  input:
-    "w-full px-4 py-3 rounded-lg bg-gray-50 border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent  duration-300 ",
-  button:
-    "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold cursor-pointer py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-all duration-300  transform hover:scale-105 shadow-lg",
   pokedexFrame:
     "w-full max-w-4xl flex flex-col md:flex-row bg-red-700 rounded-2xl shadow-2xl p-2 md:p-3 border-4 border-red-900",
   leftPanel:
@@ -22,54 +22,12 @@ const PokedexLight = ({ color }) => (
     className={`w-5 h-5 rounded-full ${color} border-2 border-white/50 shadow-inner`}
   />
 );
-
 const Spinner = () => (
-  <div className="w-16 h-16 border-4 border-dashed  rounded-full animate-spin border-green-400" />
+  <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-green-400" />
 );
-
-const useRandomPokemon = () => {
-  const [pokemon, setPokemon] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchRandomPokemon = async () => {
-      setIsLoading(true);
-      try {
-        const randomId = Math.floor(Math.random() * 898) + 1;
-        const response = await fetch(
-          `https://pokeapi.co/api/v2/pokemon/${randomId}`
-        );
-        if (!response.ok) throw new Error("Pokémon não encontrado!");
-
-        const data = await response.json();
-        const spriteUrl = `https://play.pokemonshowdown.com/sprites/ani/${data.name}.gif`;
-
-        setPokemon({
-          name: data.name,
-          sprite: spriteUrl,
-          id: data.id,
-        });
-      } catch (err) {
-        console.error("Falha ao buscar Pokémon:", err);
-        setPokemon({
-          name: "pikachu",
-          sprite: "https://play.pokemonshowdown.com/sprites/ani/pikachu.gif",
-          id: 25,
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchRandomPokemon();
-  }, []);
-
-  return { pokemon, isLoading };
-};
 
 const PokemonDisplay = ({ pokemon, isLoading }) => {
   const formatPokemonId = (id) => `#${String(id).padStart(3, "0")}`;
-
   return (
     <div className={styleConstants.leftPanel}>
       <div className="w-full flex items-center space-x-2">
@@ -77,7 +35,6 @@ const PokemonDisplay = ({ pokemon, isLoading }) => {
         <PokedexLight color="bg-red-500" />
         <PokedexLight color="bg-yellow-400" />
       </div>
-
       <div className={styleConstants.screen}>
         {isLoading ? (
           <Spinner />
@@ -95,7 +52,6 @@ const PokemonDisplay = ({ pokemon, isLoading }) => {
           )
         )}
       </div>
-
       <div className={styleConstants.infoDisplay}>
         {isLoading
           ? "Identificando..."
@@ -106,22 +62,23 @@ const PokemonDisplay = ({ pokemon, isLoading }) => {
 };
 
 const LoginForm = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setSuccessMessage("");
-
-    if (!username || !password) {
+    if (!email || !password) {
       setError("Por favor, preencha todos os campos.");
       return;
     }
-
-    setSuccessMessage(`Bem-vindo, Treinador(a) ${username}!`);
+    try {
+      await login(email, password);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -132,25 +89,22 @@ const LoginForm = () => {
       <h2 className="text-xl font-semibold text-gray-700 text-center mb-6">
         Login do Sistema
       </h2>
-
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label
             className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="username"
+            htmlFor="email"
           >
-            Treinador(a)
+            E-mail (Login)
           </label>
-          <input
-            id="username"
+          <Input
+            id="email"
             type="text"
-            placeholder="Ex: Ash Ketchum"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className={styleConstants.input}
+            placeholder="Ex: ash@ketchum"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
-
         <div>
           <label
             className="block text-gray-700 text-sm font-bold mb-2"
@@ -158,30 +112,20 @@ const LoginForm = () => {
           >
             Senha
           </label>
-          <input
+          <Input
             id="password"
             type="password"
             placeholder="••••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={styleConstants.input}
           />
         </div>
-
-        <button type="submit" className={styleConstants.button}>
-          Entrar
-        </button>
+        <Button type="submit">Entrar</Button>
       </form>
-
       <div className="mt-6 h-12 flex items-center justify-center">
         {error && (
           <p className="w-full text-center text-red-600 font-semibold bg-red-100 p-3 rounded-lg">
             {error}
-          </p>
-        )}
-        {successMessage && (
-          <p className="w-full text-center text-green-700 font-semibold bg-green-100 p-3 rounded-lg">
-            {successMessage}
           </p>
         )}
       </div>
@@ -189,9 +133,8 @@ const LoginForm = () => {
   );
 };
 
-export default function App() {
+export default function LoginPage() {
   const { pokemon, isLoading } = useRandomPokemon();
-
   return (
     <main
       className="bg-gray-800 min-h-screen flex items-center justify-center p-4 font-sans bg-cover bg-center"
@@ -204,12 +147,10 @@ export default function App() {
       <div className="relative flex items-center justify-center w-full">
         <div className={styleConstants.pokedexFrame}>
           <PokemonDisplay pokemon={pokemon} isLoading={isLoading} />
-
           <div className="hidden md:flex flex-col items-center justify-center bg-red-800 w-8 -ml-1 -mr-1 z-10">
             <div className="w-2 h-8 bg-gray-600 rounded-full my-4 shadow-inner" />
             <div className="w-2 h-8 bg-gray-600 rounded-full my-4 shadow-inner" />
           </div>
-
           <LoginForm />
         </div>
       </div>
