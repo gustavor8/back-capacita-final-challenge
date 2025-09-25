@@ -18,8 +18,10 @@ app.use(
 // Middlewares
 app.use(express.json());
 
-// Rotas
+// Rotas Públicas
 app.use("/api", PublicRoutes);
+
+app.use("/api", authMiddleware, PrivateRoutes);
 
 // Inicializar banco e depois iniciar servidor
 initialize().then(() => {

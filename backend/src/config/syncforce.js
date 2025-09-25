@@ -3,8 +3,14 @@ import connection from "./connection.js";
 
 async function initialize() {
   try {
-    // Sincronizar modelos com o banco
-    // Agora `connection` é o objeto certo e .sync() funciona diretamente
+    // Um usuário pode ter muitos favoritos
+    User.hasMany(Favorite);
+    Favorite.belongsTo(User);
+
+    // Um usuário pode ter muitos times
+    User.hasMany(Team);
+    Team.belongsTo(User);
+
     await connection.sync({ force: false });
 
     // Criar usuário admin se não existir
