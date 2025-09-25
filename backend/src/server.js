@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import PublicRoutes from "./routes/public_routes.js";
 import initialize from "./config/syncforce.js";
+import authMiddleware from "./middleware/jwt_middleware.js";
+import privateRoutes from "./routes/private_routes.js";
 
 dotenv.config();
 const app = express();
@@ -21,7 +23,7 @@ app.use(express.json());
 // Rotas Públicas
 app.use("/api", PublicRoutes);
 
-app.use("/api", authMiddleware, PrivateRoutes);
+app.use("/api", authMiddleware, privateRoutes);
 
 // Inicializar banco e depois iniciar servidor
 initialize().then(() => {

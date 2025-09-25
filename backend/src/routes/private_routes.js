@@ -18,15 +18,4 @@ privateRoutes.delete(
   pokedexController.removeFavorite.bind(pokedexController)
 );
 
-// --- Rotas de Times ---
-privateRoutes.get("/teams", pokedexController.getTeams.bind(pokedexController));
-privateRoutes.post(
-  "/teams",
-  pokedexController.createTeam.bind(pokedexController)
-);
-privateRoutes.delete(
-  "/teams/:teamId",
-  pokedexController.deleteTeam.bind(pokedexController)
-);
-
 export default privateRoutes;
