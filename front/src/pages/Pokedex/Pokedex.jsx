@@ -12,6 +12,7 @@ import Button from "../../components/Button/Button";
 import PokemonCard from "../../components/PokemonCard/PokemonCard";
 import FilterBar from "../../components/FilterBar/FilterBar";
 import PokemonModal from "../../components/PokemonModal/PokemonModal";
+import SearchBar from "../../components/SearchBar/SearchBar";
 import { motion, AnimatePresence } from "framer-motion";
 
 const POKEMON_PER_PAGE = 30;
@@ -32,16 +33,25 @@ const PokedexHeader = ({ user, onLogout }) => (
   </header>
 );
 
-const EmptyFavorites = () => (
-  <div className="col-span-full flex flex-col items-center justify-center text-center p-12 bg-gray-800/50 rounded-lg">
-    <h2 className="text-2xl font-bold text-white">
-      Nenhum favorito encontrado
-    </h2>
-    <p className="text-gray-400 mt-2">
-      Clique na estrela de um Pokémon para adicioná-lo à sua coleção!
-    </p>
-  </div>
-);
+const EmptyResults = ({ reason }) => {
+  const messages = {
+    favorites: {
+      title: "Nenhum favorito encontrado",
+      body: "Clique na estrela de um Pokémon para adicioná-lo à sua coleção!",
+    },
+    search: {
+      title: "Nenhum Pokémon encontrado",
+      body: "Tente ajustar sua busca ou filtros.",
+    },
+  };
+  const message = messages[reason] || messages.search;
+  return (
+    <div className="col-span-full flex flex-col items-center justify-center text-center p-12 bg-gray-800/50 rounded-lg">
+      <h2 className="text-2xl font-bold text-white">{message.title}</h2>
+      <p className="text-gray-400 mt-2">{message.body}</p>
+    </div>
+  );
+};
 
 export default function PokedexPage() {
   const { user, logout } = useAuth();
@@ -55,11 +65,19 @@ export default function PokedexPage() {
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedType, setSelectedType] = useState("all");
 
   const observer = useRef();
   const lastPokemonElementRef = useCallback(
     (node) => {
-      if (isFetchingMore || filter === "favorites") return;
+      if (
+        isFetchingMore ||
+        filter === "favorites" ||
+        searchTerm ||
+        selectedType !== "all"
+      )
+        return;
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMore) {
@@ -68,7 +86,7 @@ export default function PokedexPage() {
       });
       if (node) observer.current.observe(node);
     },
-    [isFetchingMore, hasMore, filter]
+    [isFetchingMore, hasMore, filter, searchTerm, selectedType]
   );
 
   const loadMorePokemons = useCallback(async () => {
@@ -115,12 +133,9 @@ export default function PokedexPage() {
     async (pokemonId, shouldBeFavorite) => {
       const originalFavorites = new Set(favorites);
       const newFavorites = new Set(favorites);
-
       if (shouldBeFavorite) newFavorites.add(pokemonId);
       else newFavorites.delete(pokemonId);
-
       setFavorites(newFavorites);
-
       try {
         if (shouldBeFavorite) await PokedexService.addFavorite(pokemonId);
         else await PokedexService.removeFavorite(pokemonId);
@@ -133,11 +148,25 @@ export default function PokedexPage() {
   );
 
   const filteredPokemons = useMemo(() => {
-    if (filter === "favorites") {
-      return pokemons.filter((pokemon) => favorites.has(pokemon.id));
+    let pokemonsToFilter =
+      filter === "favorites"
+        ? pokemons.filter((p) => favorites.has(p.id))
+        : pokemons;
+
+    if (selectedType !== "all") {
+      pokemonsToFilter = pokemonsToFilter.filter((p) =>
+        p.types.includes(selectedType)
+      );
     }
-    return pokemons;
-  }, [pokemons, favorites, filter]);
+
+    if (searchTerm) {
+      pokemonsToFilter = pokemonsToFilter.filter((p) =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    return pokemonsToFilter;
+  }, [pokemons, favorites, filter, searchTerm, selectedType]);
 
   const handleCardClick = useCallback(async (pokemonId) => {
     try {
@@ -160,6 +189,9 @@ export default function PokedexPage() {
     );
   }
 
+  const showLoadMore =
+    isFetchingMore && !searchTerm && selectedType === "all" && filter === "all";
+
   return (
     <div className="bg-gray-900 min-h-screen text-white font-sans">
       <div
@@ -168,15 +200,18 @@ export default function PokedexPage() {
       >
         <div className="bg-black/60 backdrop-blur-sm pb-12 min-h-screen">
           <PokedexHeader user={user} onLogout={logout} />
-
           <FilterBar activeFilter={filter} onFilterChange={setFilter} />
-
+          <SearchBar
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
+            selectedType={selectedType}
+            onSelectedTypeChange={setSelectedType}
+          />
           {error && (
             <p className="text-center text-red-400 bg-red-900/50 p-3 rounded-md max-w-7xl mx-auto">
               {error}
             </p>
           )}
-
           <main className="max-w-7xl mx-auto px-4">
             <motion.div
               className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"
@@ -191,7 +226,10 @@ export default function PokedexPage() {
                   filteredPokemons.map((pokemon, index) => {
                     const isLastElement = filteredPokemons.length === index + 1;
                     const shouldAttachRef =
-                      isLastElement && filter !== "favorites";
+                      isLastElement &&
+                      filter !== "favorites" &&
+                      !searchTerm &&
+                      selectedType === "all";
 
                     if (shouldAttachRef) {
                       return (
@@ -217,12 +255,13 @@ export default function PokedexPage() {
                     }
                   })
                 ) : (
-                  <EmptyFavorites />
+                  <EmptyResults
+                    reason={filter === "favorites" ? "favorites" : "search"}
+                  />
                 )}
               </AnimatePresence>
             </motion.div>
-
-            {isFetchingMore && (
+            {showLoadMore && (
               <div className="flex justify-center mt-8">
                 <Spinner />
               </div>
@@ -230,7 +269,6 @@ export default function PokedexPage() {
           </main>
         </div>
       </div>
-
       <AnimatePresence>
         {selectedPokemon && (
           <PokemonModal
@@ -239,7 +277,6 @@ export default function PokedexPage() {
           />
         )}
       </AnimatePresence>
-
       {isModalLoading && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Spinner />

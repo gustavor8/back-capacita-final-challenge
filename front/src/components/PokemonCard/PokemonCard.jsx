@@ -60,12 +60,12 @@ const PokemonCard = ({
   return (
     <motion.div
       layout
+      onClick={onCardClick}
+      className={`relative flex flex-col items-center p-4 rounded-xl shadow-lg text-white bg-gradient-to-br ${bgColor} cursor-pointer`}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-      onClick={onCardClick}
-      className={`relative flex flex-col items-center p-4 rounded-xl shadow-lg text-white bg-gradient-to-br ${bgColor} cursor-pointer`}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
       <FavoriteIcon
         isFavorite={isFavorite}

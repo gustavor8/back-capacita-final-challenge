@@ -98,7 +98,6 @@ const PokemonModal = ({ pokemon, onClose }) => {
 
   const primaryType = pokemon.types[0];
   const colors = typeColorMap[primaryType] || typeColorMap.normal;
-
   const capitalize = (string) => {
     if (!string) return "";
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -126,11 +125,10 @@ const PokemonModal = ({ pokemon, onClose }) => {
         >
           &times;
         </button>
-
         <div className="p-6">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="flex-shrink-0">
-              <img
+              <motion.img
                 src={pokemon.animatedSprite || pokemon.image}
                 alt={`Sprite de ${pokemon.name}`}
                 className="w-40 h-40 drop-shadow-lg"
@@ -142,7 +140,6 @@ const PokemonModal = ({ pokemon, onClose }) => {
                 #{String(pokemon.id).padStart(3, "0")}
               </p>
             </div>
-
             <div className="w-full space-y-4">
               <p className="text-center md:text-left text-sm italic text-white/90">
                 {pokemon.flavorText}
@@ -171,7 +168,6 @@ const PokemonModal = ({ pokemon, onClose }) => {
               </div>
             </div>
           </div>
-
           <div className="mt-6">
             <h3 className="font-bold text-lg mb-2 text-center">
               Estatísticas Base
