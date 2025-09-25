@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getPokemons, getPokemonDetails } from "../../services/pokemonService";
 import * as PokedexService from "../../services/pokedexService";
@@ -7,6 +13,8 @@ import PokemonCard from "../../components/PokemonCard/PokemonCard";
 import FilterBar from "../../components/FilterBar/FilterBar";
 import PokemonModal from "../../components/PokemonModal/PokemonModal";
 import { motion, AnimatePresence } from "framer-motion";
+
+const POKEMON_PER_PAGE = 30;
 
 const Spinner = () => (
   <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-red-500" />
@@ -39,28 +47,65 @@ export default function PokedexPage() {
   const { user, logout } = useAuth();
   const [pokemons, setPokemons] = useState([]);
   const [favorites, setFavorites] = useState(new Set());
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
   const [selectedPokemon, setSelectedPokemon] = useState(null);
   const [isModalLoading, setIsModalLoading] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
+  const observer = useRef();
+  const lastPokemonElementRef = useCallback(
+    (node) => {
+      if (isFetchingMore || filter === "favorites") return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          loadMorePokemons();
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [isFetchingMore, hasMore, filter]
+  );
+
+  const loadMorePokemons = useCallback(async () => {
+    setIsFetchingMore(true);
+    setError("");
+    try {
+      const newPokemons = await getPokemons(POKEMON_PER_PAGE, offset);
+      setPokemons((prev) => [...prev, ...newPokemons]);
+      setOffset((prev) => prev + POKEMON_PER_PAGE);
+      if (newPokemons.length < POKEMON_PER_PAGE) {
+        setHasMore(false);
+      }
+    } catch (err) {
+      setError("Não foi possível carregar mais Pokémon.");
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }, [offset]);
 
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        setLoading(true);
+        setInitialLoading(true);
         setError("");
         const [pokemonData, favoriteData] = await Promise.all([
-          getPokemons(151),
+          getPokemons(POKEMON_PER_PAGE, 0),
           PokedexService.fetchFavorites(),
         ]);
         setPokemons(pokemonData);
         setFavorites(new Set(favoriteData));
+        setOffset(POKEMON_PER_PAGE);
+        setHasMore(pokemonData.length === POKEMON_PER_PAGE);
       } catch (err) {
         setError("Não foi possível carregar os dados da Pokédex.");
         console.error(err);
       } finally {
-        setLoading(false);
+        setInitialLoading(false);
       }
     };
     loadInitialData();
@@ -71,19 +116,14 @@ export default function PokedexPage() {
       const originalFavorites = new Set(favorites);
       const newFavorites = new Set(favorites);
 
-      if (shouldBeFavorite) {
-        newFavorites.add(pokemonId);
-      } else {
-        newFavorites.delete(pokemonId);
-      }
+      if (shouldBeFavorite) newFavorites.add(pokemonId);
+      else newFavorites.delete(pokemonId);
+
       setFavorites(newFavorites);
 
       try {
-        if (shouldBeFavorite) {
-          await PokedexService.addFavorite(pokemonId);
-        } else {
-          await PokedexService.removeFavorite(pokemonId);
-        }
+        if (shouldBeFavorite) await PokedexService.addFavorite(pokemonId);
+        else await PokedexService.removeFavorite(pokemonId);
       } catch (error) {
         setFavorites(originalFavorites);
         setError("Não foi possível atualizar o favorito.");
@@ -111,7 +151,7 @@ export default function PokedexPage() {
     }
   }, []);
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="bg-gray-900 min-h-screen flex flex-col items-center justify-center text-white">
         <Spinner />
@@ -143,29 +183,50 @@ export default function PokedexPage() {
               initial="hidden"
               animate="visible"
               variants={{
-                visible: {
-                  transition: {
-                    staggerChildren: 0.07,
-                  },
-                },
+                visible: { transition: { staggerChildren: 0.07 } },
               }}
             >
               <AnimatePresence>
                 {filteredPokemons.length > 0 ? (
-                  filteredPokemons.map((pokemon) => (
-                    <PokemonCard
-                      key={pokemon.id}
-                      pokemon={pokemon}
-                      isFavorite={favorites.has(pokemon.id)}
-                      onFavoriteToggle={handleFavoriteToggle}
-                      onCardClick={() => handleCardClick(pokemon.id)}
-                    />
-                  ))
+                  filteredPokemons.map((pokemon, index) => {
+                    const isLastElement = filteredPokemons.length === index + 1;
+                    const shouldAttachRef =
+                      isLastElement && filter !== "favorites";
+
+                    if (shouldAttachRef) {
+                      return (
+                        <div ref={lastPokemonElementRef} key={pokemon.id}>
+                          <PokemonCard
+                            pokemon={pokemon}
+                            isFavorite={favorites.has(pokemon.id)}
+                            onFavoriteToggle={handleFavoriteToggle}
+                            onCardClick={() => handleCardClick(pokemon.id)}
+                          />
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <PokemonCard
+                          key={pokemon.id}
+                          pokemon={pokemon}
+                          isFavorite={favorites.has(pokemon.id)}
+                          onFavoriteToggle={handleFavoriteToggle}
+                          onCardClick={() => handleCardClick(pokemon.id)}
+                        />
+                      );
+                    }
+                  })
                 ) : (
                   <EmptyFavorites />
                 )}
               </AnimatePresence>
             </motion.div>
+
+            {isFetchingMore && (
+              <div className="flex justify-center mt-8">
+                <Spinner />
+              </div>
+            )}
           </main>
         </div>
       </div>
