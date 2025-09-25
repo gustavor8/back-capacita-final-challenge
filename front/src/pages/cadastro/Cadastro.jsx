@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./Cadastro.css";
 
@@ -43,22 +43,48 @@ export default function Cadastro() {
         <fieldset>
           <legend><b>Cadastro de Usuário</b></legend>
           <div className="inputBox">
-            <input type="text" name="nome" className="inputUser" value={form.nome} onChange={handleChange} required />
+            <input
+              type="text"
+              name="nome"
+              className="inputUser"
+              value={form.nome}
+              onChange={handleChange}
+              required
+            />
             <label className="labelInput">Nome completo</label>
           </div>
           <div className="inputBox">
-            <input type="text" name="email" className="inputUser" value={form.email} onChange={handleChange} required />
+            <input
+              type="text"
+              name="email"
+              className="inputUser"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
             <label className="labelInput">Email</label>
           </div>
           <div className="inputBox">
-            <input type="password" name="password" className="inputUser" value={form.password} onChange={handleChange} required />
+            <input
+              type="password"
+              name="password"
+              className="inputUser"
+              value={form.password}
+              onChange={handleChange}
+              required
+            />
             <label className="labelInput">Senha</label>
           </div>
           <input type="submit" id="submit" value="Cadastrar" />
         </fieldset>
       </form>
+
       {error && <p style={{ color: "red" }}>{error}</p>}
       {success && <p style={{ color: "lightgreen" }}>{success}</p>}
+
+      <p style={{ marginTop: "10px", textAlign: "center", color: "#fff" }}>
+        Já possui uma conta? <Link to="/login">Entrar</Link>
+      </p>
     </div>
   );
 }

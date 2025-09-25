@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./Login.css";
 
@@ -45,7 +45,12 @@ export default function Login() {
         <br /><br />
         <button type="submit">Enviar</button>
       </form>
+
       {error && <p style={{ color: "red" }}>{error}</p>}
+
+      <p style={{ marginTop: "10px", color: "#fff" }}>
+        Não tem uma conta? <Link to="/cadastro">Cadastrar</Link>
+      </p>
     </div>
   );
 }

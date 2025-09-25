@@ -1,5 +1,8 @@
 import CardAuthor from "../../components/cardAuthor/cardAuthor";
 import photo from "../../assets/img/gustaDev.png";
+import gabriel from "../../assets/img/gabriel.jpg";
+import pedro from "../../assets/img/pedro.jpg";
+
 export default function Contacts() {
   const autores = [
     {
@@ -26,7 +29,7 @@ export default function Contacts() {
     {
       name: "Pedro José",
       photo:
-        "https://aventurasnahistoria.com.br/media/uploads/2024/09/seu-madruga.jpg",
+        pedro,
       social: [
         { name: "Linkedin", url: "https://www.linkedin.com/in/pedro-jos%C3%A9-438a45201/" },
         { name: "GitHub", url: "https://github.com/pedrojose1999" },
@@ -36,10 +39,10 @@ export default function Contacts() {
     {
       name: "Gabriel Aguiar",
       photo:
-        "https://aventurasnahistoria.com.br/media/uploads/2024/09/seu-madruga.jpg",
+        gabriel,
       social: [
-        { name: "Linkedin", url: "https://www.linkedin.com/in/pedro-jos%C3%A9-438a45201/" },
-        { name: "GitHub", url: "https://github.com/pedrojose1999" },
+        { name: "Linkedin", url: "/contacts" },
+        { name: "GitHub", url: "https://github.com/GabrielAgui373" },
       ],
     },
   ];
